@@ -1,8 +1,33 @@
 import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
 
 function ExpenseGraph({ expenses }) {
-  // Custom color palette matching your theme
   const COLORS = ['#0A2463', '#3E92CC', '#FB3640', '#1B998B', '#FF9F1C', '#A675A1', '#5F4B66', '#94C5CC'];
+
+  // Aggregate expenses by category
+  const categoryData = expenses.reduce((acc, expense) => {
+    const existing = acc.find(item => item.category === expense.category);
+    if (existing) {
+      existing.totalAmount += expense.amount;
+    } else {
+      acc.push({ 
+        category: expense.category,
+        totalAmount: expense.amount,
+        count: 1 
+      });
+    }
+    return acc;
+  }, []);
+
+  // Format data for charts
+  const processData = () => {
+    return categoryData.map(item => ({
+      name: item.category,
+      value: item.totalAmount,
+      count: item.count
+    }));
+  };
+
+  const chartData = processData();
 
   if (expenses.length === 0) {
     return (
@@ -23,23 +48,22 @@ function ExpenseGraph({ expenses }) {
 
       {/* Pie Chart Section */}
       <div className="chart-section">
-        <h3 className="chart-title">Spending Distribution</h3>
+        <h3 className="chart-title">Spending by Category</h3>
         <div className="chart-wrapper">
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={expenses}
-                dataKey="amount"
-                nameKey="description"
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
                 cx="50%"
                 cy="50%"
                 outerRadius={100}
                 innerRadius={60}
                 paddingAngle={2}
                 label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                labelLine={false}
               >
-                {expenses.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
                     fill={COLORS[index % COLORS.length]} 
@@ -49,7 +73,7 @@ function ExpenseGraph({ expenses }) {
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value) => [`$${value}`, 'Amount']}
+                formatter={(value, name) => [`$${value.toFixed(2)}`, name]}
                 contentStyle={{
                   background: '#fff',
                   border: 'none',
@@ -75,13 +99,13 @@ function ExpenseGraph({ expenses }) {
         <div className="chart-wrapper">
           <ResponsiveContainer width="100%" height={300}>
             <BarChart 
-              data={expenses} 
+              data={chartData} 
               margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
               barSize={40}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
               <XAxis 
-                dataKey="description" 
+                dataKey="name" 
                 angle={-45} 
                 textAnchor="end"
                 height={70}
@@ -92,7 +116,7 @@ function ExpenseGraph({ expenses }) {
                 tickFormatter={(value) => `$${value}`}
               />
               <Tooltip 
-                formatter={(value) => [`$${value}`, 'Amount']}
+                formatter={(value) => [`$${value.toFixed(2)}`, 'Total']}
                 contentStyle={{
                   background: '#fff',
                   border: 'none',
@@ -105,11 +129,11 @@ function ExpenseGraph({ expenses }) {
                 wrapperStyle={{ paddingTop: '20px' }}
               />
               <Bar 
-                dataKey="amount" 
-                name="Amount"
+                dataKey="value" 
+                name="Total Amount"
                 radius={[4, 4, 0, 0]}
               >
-                {expenses.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
                     fill={COLORS[index % COLORS.length]} 
@@ -121,6 +145,7 @@ function ExpenseGraph({ expenses }) {
         </div>
       </div>
 
+      {/* Keep all your existing styles here */}
       <style jsx>{`
         .graph-container {
           width: 100%;

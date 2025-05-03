@@ -3,25 +3,44 @@ import { useState } from 'react';
 function ExpenseForm({ setExpenses }) {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('');
 
-  const handleAddExpense = (e) => {
+  const handleAddExpense = async (e) => {
     e.preventDefault();
 
-    if (!description || !amount) {
+    if (!description || !amount || !category) {
       alert('Please fill all fields!');
       return;
     }
 
-    const newExpense = {
-      id: Date.now(),
-      description,
-      amount: parseFloat(amount),
-      date: new Date().toLocaleDateString()
-    };
+    try {
+      const response = await fetch('http://localhost:5000/api/expenses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          description,
+          amount: parseFloat(amount),
+          category
+        })
+      });
 
-    setExpenses(prev => [...prev, newExpense]);
-    setDescription('');
-    setAmount('');
+      if (response.ok) {
+        const newExpense = await response.json();
+        setExpenses(prev => [...prev, {
+          ...newExpense,
+          date: new Date(newExpense.date).toLocaleDateString()
+        }]);
+        setDescription('');
+        setAmount('');
+        setCategory('');
+      }
+    } catch (err) {
+      console.error('Error adding expense:', err);
+      alert('Failed to add expense');
+    }
   };
 
   return (
@@ -53,6 +72,24 @@ function ExpenseForm({ setExpenses }) {
           />
         </div>
 
+        {/* Added Category Dropdown */}
+        <div className="input-group">
+          <label className="input-label">Category</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="form-input"
+            required
+          >
+            <option value="">Select Category</option>
+            <option value="Food">Food</option>
+            <option value="Transport">Transport</option>
+            <option value="Housing">Housing</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
         <button type="submit" className="submit-button">
           <span>Add Expense</span>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -60,7 +97,6 @@ function ExpenseForm({ setExpenses }) {
           </svg>
         </button>
       </form>
-
       <style jsx>{`
         .expense-form-container {
           width: 100%;

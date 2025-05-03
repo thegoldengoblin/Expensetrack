@@ -1,16 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExpenseForm from '../components/ExpenseForm';
 import ExpenseList from '../components/ExpenseList';
 import ExpenseGraph from '../components/ExpenseGraph';
+import { isAuthenticated } from '../utils/auth';
 
 function Dashboard() {
   const [expenses, setExpenses] = useState([]);
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    navigate('/');
+    localStorage.removeItem('token');
+    navigate('/login');
   };
+
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/expenses', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) handleLogout();
+          throw new Error('Failed to fetch expenses');
+        }
+        
+        const data = await response.json();
+        setExpenses(data);
+      } catch (err) {
+        console.error('Error:', err);
+        alert(err.message);
+      }
+    };
+
+    if (!isAuthenticated()) {
+      alert('Please login first');
+      navigate('/login');
+    } else {
+      fetchExpenses();
+    }
+  }, [navigate]);
 
   return (
     <div className="dashboard-container">
@@ -56,6 +88,7 @@ function Dashboard() {
         </div>
       </main>
 
+      {/* Keep all your existing styles here */}
       <style jsx>{`
         .dashboard-container {
           min-height: 100vh;
@@ -80,7 +113,7 @@ function Dashboard() {
 
         .app-title {
           color: #0A2463;
-          font-size: 2.2rem; /* Increased from 1.8rem */
+          font-size: 2.2rem;
           font-weight: 700;
           letter-spacing: -0.5px;
           margin: 0;
@@ -93,8 +126,8 @@ function Dashboard() {
           background: none;
           border: none;
           color: #FB3640;
-          font-size: 1.2rem; /* Increased from 1rem */
-          font-weight: 600; /* Made bolder */
+          font-size: 1.2rem;
+          font-weight: 600;
           cursor: pointer;
           padding: 0.75rem 1.25rem;
           border-radius: 8px;
@@ -139,7 +172,7 @@ function Dashboard() {
         .card {
           background: white;
           border-radius: 16px;
-          padding: 2.5rem; /* Increased from 2rem */
+          padding: 2.5rem;
           box-shadow: 0 4px 20px rgba(10, 36, 99, 0.08);
           height: 100%;
         }
@@ -158,9 +191,9 @@ function Dashboard() {
 
         .section-title {
           color: #0A2463;
-          font-size: 1.8rem; /* Increased from 1.4rem */
+          font-size: 1.8rem;
           font-weight: 600;
-          margin-bottom: 2rem; /* Increased from 1.5rem */
+          margin-bottom: 2rem;
           display: flex;
           align-items: center;
         }
@@ -168,23 +201,22 @@ function Dashboard() {
         .section-title::before {
           content: '';
           display: inline-block;
-          width: 10px; /* Increased from 8px */
-          height: 10px; /* Increased from 8px */
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
           background: currentColor;
-          margin-right: 14px; /* Increased from 12px */
+          margin-right: 14px;
         }
 
-        /* Enhanced Form Styles */
         :global(.expense-form) {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem; /* Increased spacing */
+          gap: 1.5rem;
         }
 
         :global(.form-input) {
-          font-size: 1.1rem !important; /* Larger font */
-          padding: 1rem !important; /* Larger padding */
+          font-size: 1.1rem !important;
+          padding: 1rem !important;
           border-radius: 10px !important;
         }
 
@@ -196,7 +228,7 @@ function Dashboard() {
         :global(.submit-button) {
           font-size: 1.2rem !important;
           padding: 1.1rem !important;
-          background-color: #3E92CC !important; /* Changed to mint */
+          background-color: #3E92CC !important;
           border-radius: 10px !important;
           margin-top: 1rem !important;
         }

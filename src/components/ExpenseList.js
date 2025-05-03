@@ -16,17 +16,27 @@ function ExpenseList({ expenses }) {
       ) : (
         <ul className="expense-items">
           {expenses.map((expense) => (
-            <li key={expense.id} className="expense-item">
+            <li key={expense._id} className="expense-item"> {/* Changed to _id */}
               <div className="expense-details">
                 <div className="expense-icon">
                   {expense.description.charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <h3 className="expense-title">{expense.description}</h3>
-                  <p className="expense-date">{expense.date}</p>
+                  {/* Added category display */}
+                  <p className="expense-category">{expense.category}</p>
+                  {/* Formatted date */}
+                  <p className="expense-date">
+                    {new Date(expense.date).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </p>
                 </div>
               </div>
-              <span className="expense-amount">-${expense.amount.toFixed(2)}</span>
+              <span className="expense-amount">-₹{expense.amount.toFixed(2)}</span>
             </li>
           ))}
         </ul>
@@ -112,6 +122,15 @@ function ExpenseList({ expenses }) {
           font-size: 1.2rem;
           margin: 0;
           font-weight: 500;
+        }
+
+        .expense-category {
+          color: #1B998B;
+          font-size: 0.9rem;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin: 0.2rem 0;
         }
         
         .expense-date {
